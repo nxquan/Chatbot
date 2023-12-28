@@ -36,6 +36,7 @@ export function Chat() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshingForDeleting, setRefreshingForDeleting] = useState(false);
   const [apiKey, setApiKey] = useState<any>(undefined);
+  const [firstTime, setFirstTime] = useState(true);
   const onSend = async (messages: any[]) => {
     if (!apiKey) {
       Alert.alert('API Key của OpenAI bị thu hồi vì bảo mật');
@@ -117,6 +118,7 @@ export function Chat() {
             GiftedChat.append(previousMessages, [...systemMessages]),
           );
           setLoading(false);
+          setRefreshing(!refreshing);
         }, 1000);
       })
       .catch(error => {
@@ -125,7 +127,6 @@ export function Chat() {
         );
         setLoading(false);
       });
-    setRefreshing(!refreshing);
   };
 
   const onChangeConversation = useCallback((id: any) => {
@@ -205,6 +206,10 @@ export function Chat() {
           setCurrentConversationId(data[data.length - 1].id);
         }
         setRefreshingForDeleting(false);
+      }
+      if (firstTime) {
+        setCurrentConversationId(data[data.length - 1].id);
+        setFirstTime(false);
       }
       setConversations(data);
     };
@@ -300,8 +305,10 @@ export function Chat() {
           onOutsidePress={() => {
             setShowHistoryModal(false);
           }}>
-          <View className="flex-1 px-2 pt-4">
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <View className="flex-1  pt-4">
+            <ScrollView
+              className="flex-1 px-2"
+              showsVerticalScrollIndicator={false}>
               {conversations.map((con: any, index: number) => {
                 return (
                   <ChatItem
