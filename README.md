@@ -9,10 +9,10 @@
 **Project**: Chatbot using API of OpenAI
 
 **Notes:**
-This project is support fully for Android. In iOS, I don't have enough devices for development, so maybe it not work for iOS**
+This project is support fully for Android. In iOS, I don't have enough devices for development, so maybe it not work for iOS
 
 
-**Youtube demo:** https://youtu.be/k-yKgSB4KPI
+**Youtube demo:** https://youtu.be/5ImJGuHMXcw
 
 **Tech**: React Native 0.72.6, JDK 11
 
