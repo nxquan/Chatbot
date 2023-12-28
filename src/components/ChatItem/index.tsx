@@ -10,15 +10,17 @@ type Props = {
   currentConversationId: string;
   onChangeConversation: (conversationId: any) => void;
   onChangeRefreshing: () => void;
+  onChangeRefreshingForDeleting: (data: boolean) => void;
   conversations: string[];
 };
 const ChatItem = (props: Props) => {
   const {
     data,
     currentConversationId,
+    conversations,
     onChangeConversation,
     onChangeRefreshing,
-    conversations,
+    onChangeRefreshingForDeleting,
   } = props;
 
   const handleDeleteConversation = async () => {
@@ -34,6 +36,7 @@ const ChatItem = (props: Props) => {
       }),
     );
     await firestore().collection('conversations').doc(data.id).delete();
+    onChangeRefreshingForDeleting(true);
     onChangeRefreshing();
     if (conversations.length > 0) {
       onChangeConversation(conversations[0]);

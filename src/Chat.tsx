@@ -34,8 +34,13 @@ export function Chat() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
+  const [refreshingForDeleting, setRefreshingForDeleting] = useState(false);
+  const [apiKey, setApiKey] = useState<any>(undefined);
   const onSend = async (messages: any[]) => {
+    if (!apiKey) {
+      Alert.alert('API Key của OpenAI bị thu hồi vì bảo mật');
+      return;
+    }
     const currentMessage = messages[0];
     const data = {
       model: 'gpt-3.5-turbo',
@@ -73,7 +78,7 @@ export function Chat() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer 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`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(data),
     })
@@ -107,13 +112,17 @@ export function Chat() {
           }),
         );
 
-        setMessages((previousMessages: any) =>
-          GiftedChat.append(previousMessages, [...systemMessages]),
-        );
-        setLoading(false);
+        setTimeout(() => {
+          setMessages((previousMessages: any) =>
+            GiftedChat.append(previousMessages, [...systemMessages]),
+          );
+          setLoading(false);
+        }, 1000);
       })
       .catch(error => {
-        Alert.alert('API của OpenAI bị giới hạn 3 request / phút');
+        Alert.alert(
+          'API free OpenAI giới hạn 3 request / phút, nên tránh sử dụng liên tục',
+        );
         setLoading(false);
       });
     setRefreshing(!refreshing);
@@ -171,6 +180,7 @@ export function Chat() {
         },
       },
     ]);
+    setRefreshing(!refreshing);
     setCurrentConversationId(_id);
   };
 
@@ -188,10 +198,13 @@ export function Chat() {
         return a.createdAt.getTime() - b.createdAt.getTime();
       });
 
-      if (data.length === 0) {
-        handleAddNewConversation();
-      } else {
-        setCurrentConversationId(data[data.length - 1].id);
+      if (refreshingForDeleting) {
+        if (data.length === 0) {
+          handleAddNewConversation();
+        } else {
+          setCurrentConversationId(data[data.length - 1].id);
+        }
+        setRefreshingForDeleting(false);
       }
       setConversations(data);
     };
@@ -213,7 +226,7 @@ export function Chat() {
           return {id: doc.id, ...doc.data(), createdAt: date};
         });
         data.sort((a: any, b: any) => {
-          return a.createdAt.getTime() - b.createdAt.getTime();
+          return b.createdAt.getTime() - a.createdAt.getTime();
         });
         setMessages(data);
       } else {
@@ -223,6 +236,21 @@ export function Chat() {
     fetchMessages();
   }, [currentConversationId]);
 
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      const res = await firestore().collection('api_keys').doc('v1').get();
+      if (res.data() !== undefined) {
+        setApiKey(res.data()?.key);
+      }
+    };
+    fetchApiKey();
+  }, []);
+
+  useEffect(() => {
+    Alert.alert(
+      'API free OpenAI giới hạn 3 request / phút, nên tránh sử dụng liên tục',
+    );
+  }, []);
   return (
     <SafeAreaView className="flex-1">
       <View className="flex-row items-center px-5 py-3 border-b border-b-orange-200">
@@ -255,6 +283,7 @@ export function Chat() {
           renderAvatar={renderAvatar}
           renderBubble={renderBubble}
           renderInputToolbar={renderInputToolbar}
+          disableComposer={loading}
           showUserAvatar
           alwaysShowSend={true}
           showAvatarForEveryMessage={false}
@@ -281,6 +310,7 @@ export function Chat() {
                     onChangeConversation={onChangeConversation}
                     currentConversationId={currentConversationId}
                     onChangeRefreshing={onChangeRefreshing}
+                    onChangeRefreshingForDeleting={setRefreshingForDeleting}
                     conversations={conversations}
                   />
                 );
